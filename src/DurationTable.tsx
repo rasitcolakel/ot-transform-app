@@ -8,37 +8,125 @@ import {
 } from "@/components/ui/table";
 import { DurationByUser } from "@/types";
 import { readableDate } from "./lib/xslx";
-
+import { Card, CardContent } from "@/components/ui/card";
+import { useMemo, useState } from "react";
+import {
+  ArrowDownNarrowWide,
+  ArrowUpDown,
+  ArrowUpNarrowWide,
+} from "lucide-react";
 type Props = {
   data: DurationByUser[];
 };
 
 export default function DurationTable({ data }: Props) {
-  console.log("DurationTable", data);
+  const [sortKey, setSortKey] = useState<keyof DurationByUser | undefined>(
+    undefined
+  );
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+
+  const sortedData = useMemo(() => {
+    if (!sortKey) {
+      return data;
+    }
+
+    return data.slice().sort((a, b) => {
+      if (sortOrder === "asc") {
+        return Number(a[sortKey]) - Number(b[sortKey]);
+      }
+
+      return Number(b[sortKey]) - Number(a[sortKey]);
+    });
+  }, [data, sortKey, sortOrder]);
+
+  const handleSort = (
+    newKey: keyof DurationByUser,
+    order: "asc" | "desc" = "asc"
+  ) => {
+    setSortOrder(
+      newKey === sortKey ? (sortOrder === "asc" ? "desc" : "asc") : order
+    );
+    setSortKey(newKey);
+  };
+
+  const renderSortIcon = (key: keyof DurationByUser) => {
+    if (sortKey !== key) {
+      return <ArrowUpDown size={16} />;
+    }
+
+    if (sortOrder === "asc") {
+      return <ArrowUpNarrowWide size={16} />;
+    }
+
+    return <ArrowDownNarrowWide size={16} />;
+  };
+
   return (
-    <Table className="w-full">
-      <TableHeader>
-        <TableRow>
-          <TableHead>TCKN</TableHead>
-          <TableHead>Cor ID</TableHead>
-          <TableHead>Connectng Date</TableHead>
-          <TableHead>OCR Date</TableHead>
-          <TableHead>Süre (s)</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {data.map((user, index) => (
-          <TableRow key={user.correlationId + index}>
-            <TableCell>{user.citizenshipNumber}</TableCell>
-            <TableCell>{user.correlationId}</TableCell>
-            <TableCell>
-              {readableDate(user.connectingEvent.requestTime)}
-            </TableCell>
-            <TableCell>{readableDate(user.ocrEvent.requestTime)}</TableCell>
-            <TableCell>{user.durationInSeconds}</TableCell>
-          </TableRow>
-        ))}
-      </TableBody>
-    </Table>
+    <Card className="w-full">
+      <CardContent>
+        <Table className="w-full">
+          <TableHeader>
+            <TableRow>
+              <TableHead
+                onClick={() => handleSort("index")}
+                className="cursor-pointer"
+              >
+                <div className="flex items-center justify-between">
+                  <p className="text-left">#</p>
+                  {renderSortIcon("index")}
+                </div>
+              </TableHead>
+              <TableHead
+                onClick={() => handleSort("citizenshipNumber")}
+                className="cursor-pointer"
+              >
+                <div className="flex items-center justify-between">
+                  <p className="text-left">TCKN</p>
+                  {renderSortIcon("citizenshipNumber")}
+                </div>
+              </TableHead>
+              <TableHead className="cursor-pointer">
+                <div className="flex items-center justify-between">
+                  <p className="text-left">Correlation ID</p>
+                </div>
+              </TableHead>
+              <TableHead>Connectng Date</TableHead>
+              <TableHead>OCR Date</TableHead>
+              <TableHead
+                onClick={() => handleSort("durationInSeconds")}
+                className="cursor-pointer"
+              >
+                <div className="flex items-center justify-between">
+                  <p className="text-left">Duration</p>
+                  {renderSortIcon("durationInSeconds")}
+                </div>
+              </TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {sortedData.map((user, index) => (
+              <TableRow key={user.correlationId + index}>
+                <TableCell className="text-left">{user.index}</TableCell>
+                <TableCell className="text-left">
+                  {user.citizenshipNumber}
+                </TableCell>
+                <TableCell className="text-left">
+                  {user.correlationId}
+                </TableCell>
+                <TableCell className="text-left">
+                  {readableDate(user.connectingEvent.requestTime)}
+                </TableCell>
+                <TableCell className="text-left">
+                  {readableDate(user.ocrEvent.requestTime)}
+                </TableCell>
+                <TableCell className="text-left">
+                  {user.durationInSeconds}
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </CardContent>
+    </Card>
   );
 }

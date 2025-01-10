@@ -20,6 +20,7 @@ export type UserBody = {
 };
 
 export type DurationByUser = {
+  index: number;
   citizenshipNumber: string;
   correlationId: string;
   durationInSeconds: number;

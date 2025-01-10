@@ -83,8 +83,9 @@ export const calculateDurationsByUser = (data: User[]): DurationByUser[] => {
           );
           continue;
         }
-
+        const index = durations.length + 1;
         durations.push({
+          index,
           citizenshipNumber,
           correlationId,
           durationInSeconds: duration,

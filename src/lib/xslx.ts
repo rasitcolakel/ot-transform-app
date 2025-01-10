@@ -6,12 +6,18 @@ export const mapData = (data: string[][]): User[] => {
       .slice(1)
       .filter((row) => row.length === 5)
       .map((row) => {
-        console.log("row", row);
+        const citizenshipNumber = row[0].toString();
+        const requestTime = new Date(row[3]);
+        if (typeof row[3] === "object") {
+          // eğer tarih obje olarak gelmişse, saat dilimini düzelt
+          requestTime.setHours(requestTime.getHours() - 3);
+        }
+
         return {
-          citizenshipNumber: row[0].toString(),
+          citizenshipNumber,
           correlationId: row[1],
           requestBody: JSON.parse(row[2]) as UserBody,
-          requestTime: new Date(row[3]),
+          requestTime,
           processType: row[4],
         };
       })

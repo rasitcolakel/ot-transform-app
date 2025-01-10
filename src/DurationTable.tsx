@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/table";
 import { DurationByUser } from "@/types";
 import { readableDate } from "./lib/xslx";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useMemo, useState } from "react";
 import {
   ArrowDownNarrowWide,
@@ -61,8 +61,20 @@ export default function DurationTable({ data }: Props) {
     return <ArrowDownNarrowWide size={16} />;
   };
 
+  const averageDuration = useMemo(() => {
+    return (
+      sortedData.reduce((acc, user) => acc + user.durationInSeconds, 0) /
+      sortedData.length
+    );
+  }, [sortedData]);
+
   return (
     <Card className="w-full">
+      <CardHeader>
+        <CardTitle>
+          Süre Tablosu - Ortalama: {averageDuration.toFixed(2)}.s
+        </CardTitle>
+      </CardHeader>
       <CardContent>
         <Table className="w-full">
           <TableHeader>

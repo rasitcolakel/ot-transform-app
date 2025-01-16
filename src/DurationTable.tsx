@@ -62,10 +62,11 @@ export default function DurationTable({ data }: Props) {
   };
 
   const averageDuration = useMemo(() => {
-    return (
+    const totalDuration =
       sortedData.reduce((acc, user) => acc + user.durationInSeconds, 0) /
-      sortedData.length
-    );
+      sortedData.length;
+
+    return isNaN(totalDuration) ? 0 : totalDuration;
   }, [sortedData]);
 
   return (

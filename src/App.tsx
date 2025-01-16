@@ -7,17 +7,21 @@ import UserTable from "./UserTable";
 import DurationTable from "./DurationTable";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
+import { LoaderOverlay } from "./components/LoaderOverlay";
 
 function App() {
   const [data, setData] = useState<User[]>([]);
   const [file, setFile] = useState<File | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    setData([]);
     setFile(null);
     if (!e.target.files) {
       console.error("No file selected");
       return;
     }
+    setIsLoading(true);
     const file = e.target.files[0];
     const workbook = new ExcelJS.Workbook();
     const reader = new FileReader();
@@ -25,14 +29,16 @@ function App() {
     reader.onload = async (event) => {
       if (!event.target) {
         console.error("Event target is null");
+        setIsLoading(false);
         return;
       }
       const arrayBuffer = event.target.result as ArrayBuffer;
       await workbook.xlsx.load(arrayBuffer);
-      const worksheet = workbook.getWorksheet(1);
+      const worksheet = workbook.worksheets[0];
 
       if (!worksheet) {
         console.error("Worksheet not found");
+        setIsLoading(false);
         return;
       }
 
@@ -42,7 +48,7 @@ function App() {
       });
 
       setFile(file);
-
+      console.log("all rows", rows);
       setData(
         mapData(
           rows.map((row) =>
@@ -50,6 +56,12 @@ function App() {
           )
         )
       );
+      setIsLoading(false);
+    };
+
+    reader.onerror = () => {
+      console.error("File reading error");
+      setIsLoading(false);
     };
 
     reader.readAsArrayBuffer(file);
@@ -96,38 +108,42 @@ function App() {
   return (
     <div className="flex flex-col min-h-screen py-2">
       <header className="flex flex-col justify-center container">
-        <Tabs defaultValue="calculation" className="w-full">
-          <div className="flex space-x-4 justify-between mb-4">
-            <TabsList>
-              <TabsTrigger value="calculation">Hesaplama</TabsTrigger>
-              <TabsTrigger value="excel">Excel</TabsTrigger>
-            </TabsList>
-            <div className="flex space-x-4">
-              {data.length > 0 && (
-                <Button onClick={exportCalculations}>
-                  Hesaplamaları İndir
+        <LoaderOverlay isLoading={isLoading}>
+          <Tabs defaultValue="calculation" className="w-full">
+            <div className="flex space-x-4 justify-between mb-4">
+              <TabsList>
+                <TabsTrigger value="calculation">Hesaplama</TabsTrigger>
+                <TabsTrigger value="excel">Excel</TabsTrigger>
+              </TabsList>
+              <div className="flex space-x-4">
+                {data.length > 0 && (
+                  <Button onClick={exportCalculations}>
+                    Hesaplamaları İndir
+                  </Button>
+                )}
+                <input
+                  type="file"
+                  accept=".xlsx"
+                  value={file ? undefined : ""}
+                  onChange={handleFileUpload}
+                  className="hidden"
+                />
+                <Button
+                  onClick={() => document.querySelector("input")?.click()}
+                >
+                  Dosya Seç
                 </Button>
-              )}
-              <input
-                type="file"
-                accept=".xlsx"
-                value={file ? undefined : ""}
-                onChange={handleFileUpload}
-                className="hidden"
-              />
-              <Button onClick={() => document.querySelector("input")?.click()}>
-                Dosya Seç
-              </Button>
+              </div>
             </div>
-          </div>
 
-          <TabsContent value="calculation">
-            <DurationTable data={calculateDurationsByUser(data)} />
-          </TabsContent>
-          <TabsContent value="excel">
-            <UserTable data={data} />
-          </TabsContent>
-        </Tabs>
+            <TabsContent value="calculation">
+              <DurationTable data={calculateDurationsByUser(data)} />
+            </TabsContent>
+            <TabsContent value="excel">
+              <UserTable data={data} />
+            </TabsContent>
+          </Tabs>
+        </LoaderOverlay>
       </header>
     </div>
   );
